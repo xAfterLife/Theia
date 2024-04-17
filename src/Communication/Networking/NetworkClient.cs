@@ -45,9 +45,7 @@ internal class NetworkClient(string address, int port) : TcpClient(address, port
     {
         //TODO: Implement
         foreach ( var packet in PacketSerializer.DeserializePackets(buffer[(int)offset..(int)size]) )
-        {
-            //PacketProcessor.HandlePacket(this, ref packet);
-        }
+            Console.WriteLine($"[NetworkClient - OnReceived] {packet}");
     }
 
     protected override void OnError(SocketError error)
