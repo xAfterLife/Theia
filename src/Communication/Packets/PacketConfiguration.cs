@@ -1,10 +1,11 @@
-﻿namespace Communication.Packets;
+﻿using CommunityToolkit.HighPerformance.Buffers;
 
-internal static class PacketConfiguration
+namespace Communication.Packets;
+
+public static class PacketConfiguration
 {
-    public static char HeaderSplitter = '|';
-    public static char ContentSplitter = '^';
-    public static char EndOfPacket = (char)0xFF;
+    public static readonly StringPool PacketPool = new();
 
-    // Example Packet: 'msg|Hello World^This is a message'
+    public static readonly char HeaderDelimiter = '|';
+    public static readonly char ContentDelimiter = '^';
 }

@@ -3,24 +3,32 @@
 namespace Communication.Packets;
 
 [MessagePackObject]
-public class Packet
+public readonly struct Packet
 {
-    [IgnoreMember] public string Header;
+    [Key(0)]
+    public string Header { get; }
 
-    [IgnoreMember] public string Content;
+    [Key(1)]
+    public string Content { get; }
 
-    [Key(0)] public string FullPacket;
+    [IgnoreMember]
+    public string FullPacket => $"{Header}{PacketConfiguration.HeaderDelimiter}{Content}";
 
-    [Key(1)] public char PacketSplitter;
-
-    [SerializationConstructor]
-    public Packet(string fullPacket)
+    public Packet(ReadOnlySpan<char> header, ReadOnlySpan<char> content)
     {
-        FullPacket = fullPacket;
-        PacketSplitter = PacketConfiguration.EndOfPacket;
+        Header = PacketConfiguration.PacketPool.GetOrAdd(header);
+        Content = PacketConfiguration.PacketPool.GetOrAdd(content);
+    }
 
-        var temp = fullPacket.Split(PacketConfiguration.HeaderSplitter);
-        Header = temp[0];
-        Content = temp[1];
+    public Packet(ReadOnlySpan<char> packet)
+    {
+        var splitterIndex = packet.IndexOf(PacketConfiguration.HeaderDelimiter);
+        Header = PacketConfiguration.PacketPool.GetOrAdd(packet[..splitterIndex]);
+        Content = PacketConfiguration.PacketPool.GetOrAdd(packet[(splitterIndex + 1)..]);
+    }
+
+    public override string ToString()
+    {
+        return FullPacket;
     }
 }
