@@ -1,12 +1,16 @@
 ﻿using System.Net.Sockets;
+using Communication.Handlers;
+using Communication.Models;
 using Communication.Packets;
 using Communication.Serialization;
 using NetCoreServer;
 
-namespace Communication.Networking;
+namespace ExampleLib.Networking;
 
-public sealed class NetworkSession(TcpServer server) : TcpSession(server)
+public sealed class ExampleNetworkSession(TcpServer server, string handlerSpace) : TcpSession(server), ISession
 {
+    private readonly PacketProcessor _packetProcessor = PacketProcessorFactory.CreateProcessor(handlerSpace);
+
     public long SendPacket(Packet packet)
     {
         var buffer = PacketSerializer.SerializePacket(packet);
@@ -25,9 +29,8 @@ public sealed class NetworkSession(TcpServer server) : TcpSession(server)
 
     protected override void OnReceived(byte[] buffer, long offset, long size)
     {
-        //TODO: Implement
         foreach ( var packet in PacketSerializer.DeserializePackets(buffer[(int)offset..(int)size]) )
-            Console.WriteLine($"[NetworkClient - OnReceived] {packet}");
+            _packetProcessor.HandlePacket(this, packet);
     }
 
     protected override void OnError(SocketError error)

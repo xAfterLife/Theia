@@ -14,8 +14,9 @@ public class PacketProcessor(string handlerSpace, Dictionary<string, IPacketHand
     {
         if ( packetHandlers.TryGetValue(packet.Header, out var packetHandler) )
             packetHandler.HandlePacket(session, ref packet);
+        else
+            Console.WriteLine($"[PacketHandler - {handlerSpace}] No definition for PacketHeader {packet.Header} found");
 
-        Console.WriteLine($"[PacketHandler - {handlerSpace}] No definition for PacketHeader {packet.Header} found");
         return Task.CompletedTask;
     }
 }

@@ -3,9 +3,9 @@ using Communication.Packets;
 using Communication.Serialization;
 using TcpClient = NetCoreServer.TcpClient;
 
-namespace Communication.Networking;
+namespace ExampleLib.Networking;
 
-internal class NetworkClient(string address, int port) : TcpClient(address, port)
+public class ExampleNetworkClient(string address, int port) : TcpClient(address, port)
 {
     private bool _stop;
 
@@ -43,9 +43,9 @@ internal class NetworkClient(string address, int port) : TcpClient(address, port
 
     protected override void OnReceived(byte[] buffer, long offset, long size)
     {
-        //TODO: Implement
+        //TODO: Implement ClientPacketHandler
         foreach ( var packet in PacketSerializer.DeserializePackets(buffer[(int)offset..(int)size]) )
-            Console.WriteLine($"[NetworkClient - OnReceived] {packet}");
+            Console.WriteLine($"[ExampleClient - OnReceived] {packet}");
     }
 
     protected override void OnError(SocketError error)

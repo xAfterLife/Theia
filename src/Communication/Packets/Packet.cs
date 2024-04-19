@@ -14,6 +14,13 @@ public readonly struct Packet
     [IgnoreMember]
     public string FullPacket => $"{Header}{PacketConfiguration.HeaderDelimiter}{Content}";
 
+    [SerializationConstructor]
+    public Packet(string header, string content)
+    {
+        Header = PacketConfiguration.PacketPool.GetOrAdd(header);
+        Content = PacketConfiguration.PacketPool.GetOrAdd(content);
+    }
+
     public Packet(ReadOnlySpan<char> header, ReadOnlySpan<char> content)
     {
         Header = PacketConfiguration.PacketPool.GetOrAdd(header);

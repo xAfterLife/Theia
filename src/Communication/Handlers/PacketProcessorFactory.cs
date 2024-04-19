@@ -33,7 +33,9 @@ public static class PacketProcessorFactory
     {
         _handlerBySpaces = new Dictionary<string, Dictionary<string, IPacketHandler>>();
 
-        foreach ( var type in Assembly.GetExecutingAssembly().GetTypes().Where(x => typeof(IPacketHandler).IsAssignableFrom(x) && x.GetCustomAttribute<PacketDefinitionAttribute>() != null) )
+        var types = Assembly.GetExecutingAssembly().GetTypes();
+
+        foreach ( var type in types.Where(x => typeof(IPacketHandler).IsAssignableFrom(x) && x.GetCustomAttribute<PacketDefinitionAttribute>() != null) )
         {
             var attribute = type.GetCustomAttribute<PacketDefinitionAttribute>();
             if ( attribute == null )

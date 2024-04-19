@@ -1,15 +1,13 @@
 ﻿using System.Net.Sockets;
 using NetCoreServer;
 
-namespace Communication.Networking;
+namespace ExampleLib.Networking;
 
-public class NetworkServer(string address, int port, string handlerSpace) : TcpServer(address, port)
+public class ExampleNetworkServer(string address, int port, string handlerSpace) : TcpServer(address, port)
 {
-    public string HandlerSpace { get; init; } = handlerSpace;
-
     protected override TcpSession CreateSession()
     {
-        return new NetworkSession(this);
+        return new ExampleNetworkSession(this, handlerSpace);
     }
 
     protected override void OnStarted()
