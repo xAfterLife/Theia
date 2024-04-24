@@ -4,8 +4,7 @@ namespace Communication.Packets;
 
 public static class PacketConfiguration
 {
+    public const char HeaderDelimiter = '|';
+    public const char ContentDelimiter = '^';
     public static readonly StringPool PacketPool = new();
-
-    public static readonly char HeaderDelimiter = '|';
-    public static readonly char ContentDelimiter = '^';
 }

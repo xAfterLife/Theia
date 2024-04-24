@@ -2,9 +2,9 @@
 
 namespace ExampleClient;
 
-internal class Program
+internal static class Program
 {
-    private static void Main(string[] args)
+    private static void Main()
     {
         ExampleNetworkClient client = new("127.0.0.1", 42069);
         client.Connect();

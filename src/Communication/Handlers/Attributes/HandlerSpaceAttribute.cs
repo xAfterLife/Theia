@@ -1,4 +1,4 @@
-﻿namespace Communication.Handlers;
+﻿namespace Communication.Handlers.Attributes;
 
 public class HandlerSpaceAttribute(string spaceName) : Attribute
 {

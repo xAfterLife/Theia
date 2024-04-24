@@ -1,19 +1,20 @@
 ﻿using System.Reflection;
+using Communication.Packets;
 using Communication.Packets.Attributes;
 
-namespace Communication.Packets;
+namespace Communication.Serialization;
 
-public class PacketDeserializer
+public static class PacketDeserializer
 {
-    public static readonly Dictionary<string, Type> PacketTypes = [];
-    public static readonly Dictionary<Type, Dictionary<PacketIndexAttribute, PropertyInfo>> PacketProperties = [];
+    private static readonly Dictionary<string, Type> PacketTypes = [];
+    private static readonly Dictionary<Type, Dictionary<PacketIndexAttribute, PropertyInfo>> PacketProperties = [];
 
     static PacketDeserializer()
     {
         LoadPacketTypes();
     }
 
-    public static void LoadPacketTypes()
+    private static void LoadPacketTypes()
     {
         Dictionary<PacketIndexAttribute, PropertyInfo> packetIndexPropertyInfos = [];
         var types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes());

@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using Communication.Handlers.Attributes;
 
 namespace Communication.Handlers;
 
@@ -22,7 +23,7 @@ public static class PacketProcessorFactory
         return new PacketProcessor(handlerSpace, packetHandlers);
     }
 
-    public static void LoadHandlers()
+    private static void LoadHandlers()
     {
         _handlerBySpaces = new Dictionary<string, Dictionary<Type, IPacketHandler>>();
 

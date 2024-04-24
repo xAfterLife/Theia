@@ -16,5 +16,5 @@ public abstract class PacketHandler<T> : IPacketHandler where T : IPacket
         return Task.CompletedTask;
     }
 
-    public abstract Task HandlePacket(ISession session, T packet);
+    protected abstract Task HandlePacket(ISession session, T packet);
 }
