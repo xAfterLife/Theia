@@ -15,7 +15,7 @@ internal class Program
             if ( string.IsNullOrEmpty(message) )
                 break;
 
-            client.SendPacket("msg", message);
+            client.SendPacket("msg", $"0^{message}");
         }
     }
 }

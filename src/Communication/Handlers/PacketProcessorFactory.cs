@@ -1,56 +1,70 @@
 ﻿using System.Reflection;
-using Communication.Packets.Attributes;
 
 namespace Communication.Handlers;
 
 public static class PacketProcessorFactory
 {
-    private static Dictionary<string, Dictionary<string, IPacketHandler>>? _handlerBySpaces;
+    private static Dictionary<string, Dictionary<Type, IPacketHandler>>? _handlerBySpaces;
 
-    public static Dictionary<string, Dictionary<string, IPacketHandler>>? HandlerBySpaces
+    static PacketProcessorFactory()
     {
-        get
-        {
-            if ( _handlerBySpaces == null )
-                LoadHandlers();
-
-            return _handlerBySpaces;
-        }
+        LoadHandlers();
     }
 
     public static PacketProcessor CreateProcessor(string handlerSpace)
     {
-        if ( HandlerBySpaces == null )
-            return new PacketProcessor(handlerSpace, new Dictionary<string, IPacketHandler>());
+        if ( _handlerBySpaces == null )
+            return new PacketProcessor(handlerSpace, new Dictionary<Type, IPacketHandler>());
 
-        if ( !HandlerBySpaces!.TryGetValue(handlerSpace, out var packetHandlers) )
-            packetHandlers ??= new Dictionary<string, IPacketHandler>();
+        if ( !_handlerBySpaces.TryGetValue(handlerSpace, out var packetHandlers) )
+            packetHandlers ??= new Dictionary<Type, IPacketHandler>();
 
         return new PacketProcessor(handlerSpace, packetHandlers);
     }
 
     public static void LoadHandlers()
     {
-        _handlerBySpaces = new Dictionary<string, Dictionary<string, IPacketHandler>>();
+        _handlerBySpaces = new Dictionary<string, Dictionary<Type, IPacketHandler>>();
 
-        var types = Assembly.GetExecutingAssembly().GetTypes();
-
-        foreach ( var type in types.Where(x => typeof(IPacketHandler).IsAssignableFrom(x) && x.GetCustomAttribute<PacketDefinitionAttribute>() != null) )
+        foreach ( var assemblyName in Assembly.GetEntryAssembly()?.GetReferencedAssemblies()! )
         {
-            var attribute = type.GetCustomAttribute<PacketDefinitionAttribute>();
-            if ( attribute == null )
-                continue;
+            var assembly = Assembly.Load(assemblyName);
+            var types = assembly.GetTypes();
 
-            if ( Activator.CreateInstance(type) is not IPacketHandler handler )
-                continue;
-
-            if ( !_handlerBySpaces.TryGetValue(attribute.HandlerSpace, out var dict) )
+            foreach ( var type in types.Where(IsPacketHandler) )
             {
-                dict = new Dictionary<string, IPacketHandler>();
-                _handlerBySpaces[attribute.HandlerSpace] = dict;
-            }
+                var handlerSpace = type.GetCustomAttribute<HandlerSpaceAttribute>()?.SpaceName;
+                if ( string.IsNullOrWhiteSpace(handlerSpace) )
+                    continue;
 
-            dict[attribute.Header] = handler;
+                var packetType = GetPacketType(type);
+                if ( packetType == null )
+                    continue;
+
+                if ( Activator.CreateInstance(type) as IPacketHandler is not {} handler )
+                    continue;
+
+                if ( !_handlerBySpaces.TryGetValue(handlerSpace, out var dict) )
+                {
+                    dict = new Dictionary<Type, IPacketHandler>();
+                    _handlerBySpaces[handlerSpace] = dict;
+                }
+
+                dict[packetType] = handler;
+            }
         }
+    }
+
+    private static bool IsPacketHandler(Type type)
+    {
+        return type.BaseType is
+        {
+            IsGenericType: true
+        } && type.BaseType.GetGenericTypeDefinition() == typeof(PacketHandler<>);
+    }
+
+    private static Type? GetPacketType(Type handlerType)
+    {
+        return handlerType.BaseType?.GetGenericArguments()[0];
     }
 }

@@ -3,19 +3,20 @@ using Communication.Packets;
 
 namespace Communication.Handlers;
 
-public class PacketProcessor(string handlerSpace, Dictionary<string, IPacketHandler> packetHandlers)
+public class PacketProcessor(string handlerSpace, Dictionary<Type, IPacketHandler> packetHandlers)
 {
-    public bool RegisterHandler(string header, IPacketHandler handler)
+    public bool RegisterHandler<T>(PacketHandler<T> handler) where T : IPacket
     {
-        return packetHandlers.TryAdd(header, handler);
+        return packetHandlers.TryAdd(typeof(T), handler);
     }
 
-    public Task HandlePacket(ISession session, Packet packet)
+    public Task HandlePacket<T>(ISession session, T packet) where T : IPacket
     {
-        if ( packetHandlers.TryGetValue(packet.Header, out var packetHandler) )
-            packetHandler.HandlePacket(session, ref packet);
+        var packetType = packet.GetType();
+        if ( packetHandlers.TryGetValue(packetType, out var packetHandler) )
+            packetHandler.HandlePacket(session, packet);
         else
-            Console.WriteLine($"[PacketHandler - {handlerSpace}] No definition for PacketHeader {packet.Header} found");
+            Console.WriteLine($"[PacketHandler - {handlerSpace}] No definition for PacketType {packetType} found");
 
         return Task.CompletedTask;
     }

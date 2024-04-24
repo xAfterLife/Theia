@@ -1,16 +1,14 @@
 ﻿using Communication.Handlers;
 using Communication.Models;
-using Communication.Packets;
-using Communication.Packets.Attributes;
 
 namespace ExampleLib.Packets.MsgPacket;
 
-[PacketDefinition("msg", "example")]
-public class MsgPacketHandler : IPacketHandler
+[HandlerSpace("example")]
+public class MsgPacketHandler : PacketHandler<MsgPacket>
 {
-    public Task HandlePacket(ISession session, ref Packet packet)
+    public override Task HandlePacket(ISession session, MsgPacket packet)
     {
-        Console.WriteLine($"Received message: {packet.FullPacket}");
+        Console.WriteLine($"Received message type: {packet.MessageType}{Environment.NewLine}message: {packet.Message}");
         return Task.CompletedTask;
     }
 }

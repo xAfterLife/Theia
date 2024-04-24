@@ -30,7 +30,13 @@ public sealed class ExampleNetworkSession(TcpServer server, string handlerSpace)
     protected override void OnReceived(byte[] buffer, long offset, long size)
     {
         foreach ( var packet in PacketSerializer.DeserializePackets(buffer[(int)offset..(int)size]) )
-            _packetProcessor.HandlePacket(this, packet);
+        {
+            var deserializePacket = PacketDeserializer.DeserializePacket(packet);
+            if ( deserializePacket == null )
+                Console.WriteLine($"[PacketHandler - {handlerSpace}] No definition for Header {packet.Header} found");
+            else
+                _packetProcessor.HandlePacket(this, deserializePacket);
+        }
     }
 
     protected override void OnError(SocketError error)

@@ -5,5 +5,5 @@ namespace Communication.Handlers;
 
 public interface IPacketHandler
 {
-    public Task HandlePacket(ISession session, ref Packet packet);
+    public Task HandlePacket(ISession session, IPacket packet);
 }
