@@ -10,10 +10,11 @@ namespace ExampleLib.Networking;
 public sealed class ExampleNetworkSession(TcpServer server, string handlerSpace) : TcpSession(server), ISession
 {
     private readonly PacketProcessor _packetProcessor = PacketProcessorFactory.CreateProcessor(handlerSpace);
+    private readonly PacketSerializer _packetSerializer = new();
 
     public long SendPacket(Packet packet)
     {
-        var buffer = PacketSerializer.SerializePacket(packet);
+        var buffer = _packetSerializer.SerializePacket(packet);
         return Send(buffer);
     }
 
@@ -29,7 +30,7 @@ public sealed class ExampleNetworkSession(TcpServer server, string handlerSpace)
 
     protected override void OnReceived(byte[] buffer, long offset, long size)
     {
-        foreach ( var packet in PacketSerializer.DeserializePackets(buffer[(int)offset..(int)size]) )
+        foreach ( var packet in _packetSerializer.DeserializePackets(buffer[(int)offset..(int)size]) )
         {
             var deserializePacket = PacketDeserializer.DeserializePacket(packet);
             if ( deserializePacket == null )

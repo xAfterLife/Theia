@@ -17,21 +17,21 @@ public readonly struct Packet
     [SerializationConstructor]
     public Packet(string header, string content)
     {
-        Header = PacketConfiguration.PacketPool.GetOrAdd(header);
-        Content = PacketConfiguration.PacketPool.GetOrAdd(content);
+        Header = header;
+        Content = content;
     }
 
     public Packet(ReadOnlySpan<char> header, ReadOnlySpan<char> content)
     {
-        Header = PacketConfiguration.PacketPool.GetOrAdd(header);
-        Content = PacketConfiguration.PacketPool.GetOrAdd(content);
+        Header = new string(header);
+        Content = new string(content);
     }
 
     public Packet(ReadOnlySpan<char> packet)
     {
         var splitterIndex = packet.IndexOf(PacketConfiguration.HeaderDelimiter);
-        Header = PacketConfiguration.PacketPool.GetOrAdd(packet[..splitterIndex]);
-        Content = PacketConfiguration.PacketPool.GetOrAdd(packet[(splitterIndex + 1)..]);
+        Header = new string(packet[..splitterIndex]);
+        Content = new string(packet[(splitterIndex + 1)..]);
     }
 
     public override string ToString()

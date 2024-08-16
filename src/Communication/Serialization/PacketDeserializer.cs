@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Collections.Concurrent;
+using System.Reflection;
 using Communication.Packets;
 using Communication.Packets.Attributes;
 
@@ -6,8 +7,8 @@ namespace Communication.Serialization;
 
 public static class PacketDeserializer
 {
-    private static readonly Dictionary<string, Type> PacketTypes = [];
-    private static readonly Dictionary<Type, Dictionary<PacketIndexAttribute, PropertyInfo>> PacketProperties = [];
+    private static readonly ConcurrentDictionary<string, Type> PacketTypes = new();
+    private static readonly ConcurrentDictionary<Type, Dictionary<PacketIndexAttribute, PropertyInfo>> PacketProperties = new();
 
     static PacketDeserializer()
     {
@@ -16,26 +17,37 @@ public static class PacketDeserializer
 
     private static void LoadPacketTypes()
     {
-        Dictionary<PacketIndexAttribute, PropertyInfo> packetIndexPropertyInfos = [];
-        var types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes());
+        var packetIndexPropertyInfos = new Dictionary<PacketIndexAttribute, PropertyInfo>();
+        var types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes()).Where(IsPacket);
 
-        foreach ( var type in types.Where(x => typeof(IPacket).IsAssignableFrom(x) && x.GetCustomAttribute<PacketDefinitionAttribute>() != null) )
+        foreach ( var type in types )
         {
             var attribute = type.GetCustomAttribute<PacketDefinitionAttribute>();
             if ( attribute == null )
                 continue;
 
-            PacketTypes[attribute.Header] = type;
+            GetIndexPropertyInfos(type, packetIndexPropertyInfos);
 
-            foreach ( var x in type.GetProperties() )
-            {
-                var att = x.GetCustomAttribute<PacketIndexAttribute>();
-                if ( att != null )
-                    packetIndexPropertyInfos.Add(att, x);
-            }
+            PacketTypes.TryAdd(attribute.Header, type);
+            PacketProperties.TryAdd(type, new Dictionary<PacketIndexAttribute, PropertyInfo>(packetIndexPropertyInfos));
 
-            PacketProperties[type] = packetIndexPropertyInfos;
+            packetIndexPropertyInfos.Clear();
         }
+    }
+
+    private static void GetIndexPropertyInfos(Type type, Dictionary<PacketIndexAttribute, PropertyInfo> packetIndexPropertyInfos)
+    {
+        foreach ( var property in type.GetProperties() )
+        {
+            var att = property.GetCustomAttribute<PacketIndexAttribute>();
+            if ( att != null )
+                packetIndexPropertyInfos[att] = property;
+        }
+    }
+
+    private static bool IsPacket(Type type)
+    {
+        return typeof(IPacket).IsAssignableFrom(type) && type.GetCustomAttribute<PacketDefinitionAttribute>() != null;
     }
 
     public static IPacket? DeserializePacket(Packet packet)
@@ -58,6 +70,7 @@ public static class PacketDeserializer
                 return null;
 
             var value = packetData[attr.Index];
+
             var convertedValue = Convert.ChangeType(value, property.PropertyType);
             property.SetValue(packetInstance, convertedValue);
         }
