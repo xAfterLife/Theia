@@ -18,7 +18,7 @@ internal static class Program
 
                 while ( true )
                 {
-                    client.SendPacket("msg", $"0^pulse");
+                    client.SendPacket("msg", "0^pulse");
                     client.SendPacket("msg", $"0^{counter++}");
                 }
             }, cts.Token);

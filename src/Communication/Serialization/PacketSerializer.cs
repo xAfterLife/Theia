@@ -4,12 +4,11 @@ using MessagePack;
 
 namespace Communication.Serialization;
 
-public sealed class PacketSerializer
+public static class PacketSerializer
 {
-    private readonly object _lock = new();
-    private byte[]? _incompletePacketBuffer;
+    private static readonly object Lock = new();
 
-    public byte[] SerializePacket(Packet packet)
+    public static byte[] SerializePacket(Packet packet)
     {
         var packetBytes = MessagePackSerializer.Serialize(packet, SerializationConfiguration.Options);
         var sizeBytes = BitConverter.GetBytes(packetBytes.Length);
@@ -21,27 +20,28 @@ public sealed class PacketSerializer
         return returnArray;
     }
 
-    public IEnumerable<Packet> DeserializePackets(byte[] message)
+    public static List<Packet> DeserializePackets(byte[] message, ref byte[] incompletePacketBuffer)
     {
-        lock ( _lock )
+        lock ( Lock )
         {
-            if ( _incompletePacketBuffer is { Length: > 0 } )
+            if ( incompletePacketBuffer is { Length: > 0 } )
             {
-                var newBuffer = new byte[_incompletePacketBuffer.Length + message.Length];
-                Buffer.BlockCopy(_incompletePacketBuffer, 0, newBuffer, 0, _incompletePacketBuffer.Length);
-                Buffer.BlockCopy(message, 0, newBuffer, _incompletePacketBuffer.Length, message.Length);
+                var newBuffer = new byte[incompletePacketBuffer.Length + message.Length];
+                Buffer.BlockCopy(incompletePacketBuffer, 0, newBuffer, 0, incompletePacketBuffer.Length);
+                Buffer.BlockCopy(message, 0, newBuffer, incompletePacketBuffer.Length, message.Length);
                 message = newBuffer;
-                _incompletePacketBuffer = null;
+                incompletePacketBuffer = [];
             }
         }
 
         var offset = 0;
+        var packets = new List<Packet>();
 
         while ( offset < message.Length )
         {
             if ( offset + sizeof(int) > message.Length )
             {
-                _incompletePacketBuffer = message.AsSpan(offset).ToArray();
+                incompletePacketBuffer = message.AsSpan(offset).ToArray();
                 break;
             }
 
@@ -49,7 +49,7 @@ public sealed class PacketSerializer
 
             if ( offset + sizeof(int) + packetLength > message.Length )
             {
-                _incompletePacketBuffer = message.AsSpan(offset).ToArray();
+                incompletePacketBuffer = message.AsSpan(offset).ToArray();
                 break;
             }
 
@@ -57,7 +57,9 @@ public sealed class PacketSerializer
             var packetBytes = new ReadOnlySequence<byte>(message, offset, packetLength);
             offset += packetLength;
 
-            yield return MessagePackSerializer.Deserialize<Packet>(packetBytes, SerializationConfiguration.Options);
+            packets.Add(MessagePackSerializer.Deserialize<Packet>(packetBytes, SerializationConfiguration.Options));
         }
+
+        return packets;
     }
 }

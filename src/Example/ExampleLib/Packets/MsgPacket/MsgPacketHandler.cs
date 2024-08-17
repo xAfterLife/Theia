@@ -9,7 +9,7 @@ public class MsgPacketHandler : PacketHandler<MsgPacket>
 {
     protected override Task HandlePacket(ISession session, MsgPacket packet)
     {
-        //Console.WriteLine($"Received message type: {packet.MessageType}{Environment.NewLine}message: {packet.Message}");
+        Console.WriteLine($"Received message type: {packet.MessageType}{Environment.NewLine}message: {packet.Message}");
         return Task.CompletedTask;
     }
 }

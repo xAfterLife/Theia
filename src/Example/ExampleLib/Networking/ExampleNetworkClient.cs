@@ -7,12 +7,12 @@ namespace ExampleLib.Networking;
 
 public class ExampleNetworkClient(string address, int port) : TcpClient(address, port)
 {
-    private readonly PacketSerializer _packetSerializer = new();
+    private byte[] _incompletePacketBuffer = [];
     private bool _stop;
 
     public long SendPacket(Packet packet)
     {
-        var buffer = _packetSerializer.SerializePacket(packet);
+        var buffer = PacketSerializer.SerializePacket(packet);
         return Send(buffer);
     }
 
@@ -45,7 +45,7 @@ public class ExampleNetworkClient(string address, int port) : TcpClient(address,
     protected override void OnReceived(byte[] buffer, long offset, long size)
     {
         //TODO: Implement ClientPacketHandler
-        foreach ( var packet in _packetSerializer.DeserializePackets(buffer[(int)offset..(int)size]) )
+        foreach ( var packet in PacketSerializer.DeserializePackets(buffer[(int)offset..(int)size], ref _incompletePacketBuffer) )
             Console.WriteLine($"[ExampleClient - OnReceived] {packet}");
     }
 
