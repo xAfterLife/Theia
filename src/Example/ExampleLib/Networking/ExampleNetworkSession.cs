@@ -13,7 +13,7 @@ public sealed class ExampleNetworkSession(TcpServer server, string handlerSpace)
 
     private byte[] _incompletePacketBuffer = [];
 
-    public long SendPacket(Packet packet)
+    private long SendPacket(Packet packet)
     {
         var buffer = PacketSerializer.SerializePacket(packet);
         return Send(buffer);

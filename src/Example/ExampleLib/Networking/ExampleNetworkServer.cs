@@ -7,7 +7,8 @@ public class ExampleNetworkServer(string address, int port, string handlerSpace)
 {
     protected override TcpSession CreateSession()
     {
-        return new ExampleNetworkSession(this, handlerSpace);
+        var session = new ExampleNetworkSession(this, handlerSpace);
+        return session;
     }
 
     protected override void OnStarted()

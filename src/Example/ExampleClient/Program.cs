@@ -4,26 +4,18 @@ namespace ExampleClient;
 
 internal static class Program
 {
-    private static async Task Main()
+    private static void Main()
     {
-        CancellationTokenSource cts = new();
+        List<ExampleNetworkClient> clients = [];
 
-        for ( var i = 0; i < 1_000; i++ )
-            _ = Task.Run(() =>
-            {
-                ExampleNetworkClient client = new("127.0.0.1", 42069);
-                client.Connect();
+        for ( var i = 0; i < 10_000; i++ )
+        {
+            var client = new ExampleNetworkClient("127.0.0.1", 42069);
+            clients.Add(client);
+            client.Connect();
+        }
 
-                ulong counter = 0;
-
-                while ( true )
-                {
-                    client.SendPacket("msg", "0^pulse");
-                    client.SendPacket("msg", $"0^{counter++}");
-                }
-            }, cts.Token);
-
-        Thread.Sleep(10_000);
-        await cts.CancelAsync();
+        foreach ( var client in clients )
+            client.SendPacket("msg", "0^This is a Test");
     }
 }
