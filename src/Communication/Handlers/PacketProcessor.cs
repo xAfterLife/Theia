@@ -10,14 +10,12 @@ public class PacketProcessor(string handlerSpace, Dictionary<Type, IPacketHandle
         return packetHandlers.TryAdd(typeof(T), handler);
     }
 
-    public Task HandlePacket<T>(ISession session, T packet) where T : IPacket
+    public void HandlePacket<T>(ISession session, T packet) where T : IPacket
     {
         var packetType = packet.GetType();
         if ( packetHandlers.TryGetValue(packetType, out var packetHandler) )
             packetHandler.HandlePacket(session, packet);
         else
             Console.WriteLine($"[PacketHandler - {handlerSpace}] No definition for PacketType {packetType} found");
-
-        return Task.CompletedTask;
     }
 }

@@ -6,16 +6,13 @@ internal static class Program
 {
     private static void Main()
     {
-        List<ExampleNetworkClient> clients = [];
+        var client = new ExampleNetworkClient("127.0.0.1", 42069);
+        client.Connect();
 
-        for ( var i = 0; i < 10_000; i++ )
+        for ( var i = 0; i < 1_000; i++ )
         {
-            var client = new ExampleNetworkClient("127.0.0.1", 42069);
-            clients.Add(client);
-            client.Connect();
+            client.SendPacket("msg", "0^Das ist ein Test");
+            Thread.Sleep(1);
         }
-
-        foreach ( var client in clients )
-            client.SendPacket("msg", "0^This is a Test");
     }
 }
