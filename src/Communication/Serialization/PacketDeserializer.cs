@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Linq.Expressions;
 using System.Reflection;
 using Communication.Packets;
 using Communication.Packets.Attributes;
@@ -8,16 +7,17 @@ namespace Communication.Serialization;
 
 public static class PacketDeserializer
 {
-    private static readonly ConcurrentDictionary<string, (Type Type, Dictionary<int, Action<IPacket, string>> Setters)> Packets;
+    private static readonly ConcurrentDictionary<string, Type> PacketTypes = new();
+    private static readonly ConcurrentDictionary<Type, Dictionary<PacketIndexAttribute, PropertyInfo>> PacketProperties = new();
 
     static PacketDeserializer()
     {
-        Packets = new ConcurrentDictionary<string, (Type, Dictionary<int, Action<IPacket, string>> Setters)>();
         LoadPacketTypes();
     }
 
     private static void LoadPacketTypes()
     {
+        var packetIndexPropertyInfos = new Dictionary<PacketIndexAttribute, PropertyInfo>();
         var types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes()).Where(IsPacket);
 
         foreach ( var type in types )
@@ -26,24 +26,22 @@ public static class PacketDeserializer
             if ( attribute == null )
                 continue;
 
-            var setters = new Dictionary<int, Action<IPacket, string>>();
-            var properties = type.GetProperties();
+            GetIndexPropertyInfos(type, packetIndexPropertyInfos);
 
-            foreach ( var property in properties )
-            {
-                var indexAttribute = property.GetCustomAttribute<PacketIndexAttribute>();
-                if ( indexAttribute == null )
-                    continue;
+            PacketTypes.TryAdd(attribute.Header, type);
+            PacketProperties.TryAdd(type, new Dictionary<PacketIndexAttribute, PropertyInfo>(packetIndexPropertyInfos));
 
-                var instance = Expression.Parameter(typeof(IPacket), "instance");
-                var value = Expression.Parameter(typeof(string), "value");
+            packetIndexPropertyInfos.Clear();
+        }
+    }
 
-                var propertySetter = Expression.Lambda<Action<IPacket, string>>(Expression.Assign(Expression.Property(Expression.Convert(instance, type), property), Expression.Convert(Expression.Call(typeof(Convert), nameof(Convert.ChangeType), null, value, Expression.Constant(property.PropertyType)), property.PropertyType)), instance, value).Compile();
-
-                setters[indexAttribute.Index] = propertySetter;
-            }
-
-            Packets.TryAdd(attribute.Header, (type, setters));
+    private static void GetIndexPropertyInfos(Type type, Dictionary<PacketIndexAttribute, PropertyInfo> packetIndexPropertyInfos)
+    {
+        foreach ( var property in type.GetProperties() )
+        {
+            var att = property.GetCustomAttribute<PacketIndexAttribute>();
+            if ( att != null )
+                packetIndexPropertyInfos[att] = property;
         }
     }
 
@@ -54,22 +52,27 @@ public static class PacketDeserializer
 
     public static IPacket? DeserializePacket(Packet packet)
     {
-        if ( !Packets.TryGetValue(packet.Header, out var packetTuple) )
+        if ( !PacketTypes.TryGetValue(packet.Header, out var type) )
             return null;
 
-        var packetInstance = (IPacket?)Activator.CreateInstance(packetTuple.Type);
+        if ( !PacketProperties.TryGetValue(type, out var packetProperties) )
+            return null;
+
+        var packetInstance = (IPacket?)Activator.CreateInstance(type);
         if ( packetInstance == null )
             return null;
 
         var packetData = packet.Content.Split(PacketConfiguration.ContentDelimiter);
 
-        foreach ( var (index, setter) in packetTuple.Setters )
+        foreach ( var (attr, property) in packetProperties )
         {
-            if ( index >= packetData.Length )
+            if ( attr.Index >= packetData.Length )
                 return null;
 
-            var value = packetData[index];
-            setter(packetInstance, value);
+            var value = packetData[attr.Index];
+
+            var convertedValue = Convert.ChangeType(value, property.PropertyType);
+            property.SetValue(packetInstance, convertedValue);
         }
 
         return packetInstance;

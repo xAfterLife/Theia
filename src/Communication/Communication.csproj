@@ -7,11 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MessagePack" Version="2.5.172" />
-    <PackageReference Include="MessagePackAnalyzer" Version="2.5.172">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="MemoryPack" Version="1.21.1" />
     <PackageReference Include="NetCoreServer" Version="8.0.7" />
   </ItemGroup>
 

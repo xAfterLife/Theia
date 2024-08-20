@@ -1,20 +1,20 @@
-﻿using MessagePack;
+﻿using MemoryPack;
 
 namespace Communication.Packets;
 
-[MessagePackObject]
-public readonly struct Packet
+[MemoryPackable]
+public readonly partial struct Packet
 {
-    [Key(0)]
+    [MemoryPackInclude]
     public string Header { get; }
 
-    [Key(1)]
+    [MemoryPackInclude]
     public string Content { get; }
 
-    [IgnoreMember]
+    [MemoryPackIgnore]
     public string FullPacket => $"{Header}{PacketConfiguration.HeaderDelimiter}{Content}";
 
-    [SerializationConstructor]
+    [MemoryPackConstructor]
     public Packet(string header, string content)
     {
         Header = header;

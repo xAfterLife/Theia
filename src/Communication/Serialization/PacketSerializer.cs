@@ -1,6 +1,6 @@
 ﻿using System.Buffers;
 using Communication.Packets;
-using MessagePack;
+using MemoryPack;
 
 namespace Communication.Serialization;
 
@@ -10,7 +10,7 @@ public static class PacketSerializer
 
     public static byte[] SerializePacket(Packet packet)
     {
-        var packetBytes = MessagePackSerializer.Serialize(packet, SerializationConfiguration.Options);
+        var packetBytes = MemoryPackSerializer.Serialize(packet);
         var sizeBytes = BitConverter.GetBytes(packetBytes.Length);
 
         var returnArray = new byte[packetBytes.Length + sizeBytes.Length];
@@ -57,7 +57,7 @@ public static class PacketSerializer
             var packetBytes = new ReadOnlySequence<byte>(message, offset, packetLength);
             offset += packetLength;
 
-            packets.Add(MessagePackSerializer.Deserialize<Packet>(packetBytes, SerializationConfiguration.Options));
+            packets.Add(MemoryPackSerializer.Deserialize<Packet>(packetBytes));
         }
 
         return packets;
