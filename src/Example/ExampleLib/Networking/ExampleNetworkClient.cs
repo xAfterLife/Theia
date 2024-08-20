@@ -45,7 +45,7 @@ public class ExampleNetworkClient(string address, int port) : TcpClient(address,
     protected override void OnReceived(byte[] buffer, long offset, long size)
     {
         //TODO: Implement ClientPacketHandler
-        foreach ( var packet in PacketSerializer.DeserializePackets(buffer[(int)offset..(int)size], ref _incompletePacketBuffer) )
+        foreach ( var packet in PacketSerializer.MessageToPackets(buffer[(int)offset..(int)size], ref _incompletePacketBuffer) )
             Console.WriteLine($"[ExampleClient - OnReceived] {packet}");
     }
 

@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
 using Communication.Handlers;
 using Communication.Models;
 using Communication.Packets;
@@ -11,7 +10,6 @@ namespace ExampleLib.Networking;
 public sealed class ExampleNetworkSession(TcpServer server, string handlerSpace) : TcpSession(server), ISession
 {
     private readonly PacketProcessor _packetProcessor = PacketProcessorFactory.CreateProcessor(handlerSpace);
-    private readonly Stopwatch _stopwatch = new();
 
     private byte[] _incompletePacketBuffer = [];
 
@@ -33,14 +31,9 @@ public sealed class ExampleNetworkSession(TcpServer server, string handlerSpace)
 
     protected override void OnReceived(byte[] buffer, long offset, long size)
     {
-        foreach ( var packet in PacketSerializer.DeserializePackets(buffer[(int)offset..(int)size], ref _incompletePacketBuffer) )
+        foreach ( var packet in PacketSerializer.MessageToPackets(buffer[(int)offset..(int)size], ref _incompletePacketBuffer) )
         {
-            _stopwatch.Restart();
-
             var deserializePacket = PacketDeserializer.DeserializePacket(packet);
-
-            _stopwatch.Stop();
-            Console.WriteLine(_stopwatch.Elapsed.ToString("g"));
 
             if ( deserializePacket == null )
                 Console.WriteLine($"[PacketHandler - {handlerSpace}] No definition for Header {packet.Header} found");

@@ -20,7 +20,7 @@ public static class PacketSerializer
         return returnArray;
     }
 
-    public static List<Packet> DeserializePackets(byte[] message, ref byte[] incompletePacketBuffer)
+    public static List<Packet> MessageToPackets(byte[] message, ref byte[] incompletePacketBuffer)
     {
         lock ( Lock )
         {
